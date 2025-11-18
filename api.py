@@ -2,9 +2,14 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from passlib.context import CryptContext
 
+pwd_context = CryptContext(
+    schemes=["argon2"],
+    deprecated="auto"
+)
+
+
 app = FastAPI()
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 users = {}
 
@@ -23,6 +28,7 @@ def signup(user: UserSignup):
         raise HTTPException(status_code=400, detail="User already exists")
 
     hashed_password = pwd_context.hash(user.password)
+
     users[user.username] = hashed_password
 
     return {"message": "User created successfully"}
