@@ -1,47 +1,27 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from passlib.context import CryptContext
-
-pwd_context = CryptContext(
-    schemes=["argon2"],
-    deprecated="auto"
-)
-
+from fastapi import FastAPI
+from .auth import signup_user, login_user, UserSignup, UserLogin
+from .calculator import add, subtract, multiply, divide, power
+from .order_service import create_order
+from .user_service import get_user_profile
 
 app = FastAPI()
 
-
-users = {}
-
-class UserSignup(BaseModel):
-    username: str
-    password: str
-
-class UserLogin(BaseModel):
-    username: str
-    password: str
-
-
 @app.post("/signup")
 def signup(user: UserSignup):
-    if user.username in users:
-        raise HTTPException(status_code=400, detail="User already exists")
-
-    hashed_password = pwd_context.hash(user.password)
-
-    users[user.username] = hashed_password
-
-    return {"message": "User created successfully"}
-
+    return signup_user(user)
 
 @app.post("/login")
 def login(user: UserLogin):
-    if user.username not in users:
-        raise HTTPException(status_code=404, detail="User not found")
+    return login_user(user)
 
-    hashed_password = users[user.username]
+@app.get("/calc/add")
+def calc_add(a: float, b: float):
+    return {"result": add(a, b)}
 
-    if not pwd_context.verify(user.password, hashed_password):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+@app.get("/order")
+def order(item: str, qty: int, username: str):
+    return create_order(item, qty, username)
 
-    return {"message": "Login successful"}
+@app.get("/user/profile")
+def get_profile(username: str):
+    return get_user_profile(username)
